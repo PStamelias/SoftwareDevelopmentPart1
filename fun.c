@@ -1,12 +1,23 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "fun.h"
 enum error_code create_entry(const word* w,entry** e){
+	if(*e!=NULL)
+		return EC_FAIL;
+	if(strlen(w) == 0)
+		return EC_FAIL;
+	*e=malloc(sizeof(entry));
+	(*e)->next=NULL;
+	(*e)->my_word=malloc((strlen(w)+1)*sizeof(char));
+	(*e)->payload=NULL;
+	strcpy((*e)->my_word,w);
 	return EC_SUCCESS;
 }
 enum error_code destroy_entry(entry* e){
 	if(e==NULL)
 		return EC_FAIL;
+	free(e->my_word);
 	free(e);
 	return EC_SUCCESS;
 }
@@ -31,18 +42,21 @@ unsigned int get_number_entries(const entry_list* el){
 		return el->counter;
 }
 enum error_code add_entry(entry_list* el,const entry* e){
+	if(e==NULL)
+		return EC_FAIL;
+	entry* node=e;
 	if(el==NULL)
 		return EC_FAIL;
 	if(el->first_node==NULL){
-		el->first_node=e;
-		el->current_node=e;
+		el->first_node=node;
+		el->current_node=node;
 		return EC_SUCCESS;
 	}
 	entry* start=el->first_node;
 	while(1){
 		if(start->next==NULL){
-			start->next=e;
-			el->current_node=e;
+			start->next=node;
+			el->current_node=node;
 			break;
 		}
 		start=start->next;
