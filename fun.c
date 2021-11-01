@@ -110,3 +110,60 @@ enum error_Code lookup_entry_index(const word* w,index* ix,int threshold,entry_l
 enum error_code destroy_entry_index(index* ix){
 
 }*/
+
+int edit_distance(char* word1, char* word2, int sp){ //sp is the starting position of the longest word
+    int distance = 0;
+    int maxlen, minlen, i, new_distance;
+    if(strlen(word1) < strlen(word2)){
+        maxlen = strlen(word2) - sp;
+        minlen = strlen(word1);
+    }else if(strlen(word1) >= strlen(word2)){
+        maxlen = strlen(word1) - sp;
+        minlen = strlen(word2);
+    }
+    //compare the letters of the same position
+    //until you reach the end of at least one word
+    for(i=0; i<minlen; i++){
+        if(strlen(word1) < strlen(word2)){
+            if(word1[i] != word2[sp+i]){
+                distance++;
+            }
+        }else{
+            if(word1[sp+i] != word2[i]){
+                distance++;
+            }
+        }
+    }
+    distance = distance + (maxlen - i);     //add the remaining length to the distance
+    if(maxlen == minlen){
+        return distance;
+    }else{
+        new_distance = 1 + edit_distance(word1, word2, sp+1);  // cut out the first letter
+        if(new_distance < distance){
+            return new_distance;
+        }else{
+            return distance;
+        }
+    }
+}
+
+int hamming_distance(char* word1, char* word2){
+    int distance = 0;
+    int maxlen, minlen, i;
+    if(strlen(word1) < strlen(word2)){
+        maxlen = strlen(word2);
+        minlen = strlen(word1);
+    }else if(strlen(word1) >= strlen(word2)){
+        maxlen = strlen(word1);
+        minlen = strlen(word2);
+    }
+    //compare the letters of the same position
+    //until you reach the end of at least one word
+    for(i=0; i<minlen; i++){
+        if(word1[i] != word2[i]){
+            distance++;
+        }
+    }
+    distance = distance + (maxlen - i);     //add the remaining length to the distance
+    return distance;
+}

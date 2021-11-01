@@ -36,3 +36,5 @@ enum error_code destroy_entry_list(entry_list* el);
 /*enum error_code build_entry_index(const entry_list* el,enum match_type,index* ix);
 enum error_Code lookup_entry_index(const word* w,index* ix,int threshold,entry_list* result);
 enum error_code destroy_entry_index(index* ix);*/
+int edit_distance(char*, char*, int);    //complexity: O(n(m-n)), m is the length of the largest word, n is the length of the shortest word
+int hamming_distance(char*, char*); //complexity: O(n), n is the length of the shortest word
