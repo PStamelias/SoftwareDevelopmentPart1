@@ -81,9 +81,7 @@ entry* get_next(const entry_list* el,const entry* e){
 enum error_code destroy_entry_list(entry_list* el){
 	if(el==NULL)
 		return EC_FAIL;
-	free(el);
-	return EC_SUCCESS;
-	/*if(el->counter==0){
+	if(el->counter==0){
 		free(el);
 		return EC_SUCCESS;
 	}
@@ -99,7 +97,7 @@ enum error_code destroy_entry_list(entry_list* el){
 		next_node=next_node->next;
 	}
 	free(el);
-	return EC_SUCCESS;*/
+	return EC_SUCCESS;
 }
 /*enum error_code build_entry_index(const entry_list* el,enum match_type,index* ix){
 
