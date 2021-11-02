@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "fun.h"
 #define MAX_LENGTH_WORD 31
+#include "fun.h"
 enum error_code create_entry(const word* w,entry** e){
 	if(*e!=NULL)
 		return EC_FAIL;
@@ -100,15 +100,90 @@ enum error_code destroy_entry_list(entry_list* el){
 	free(el);
 	return EC_SUCCESS;
 }
-/*enum error_code build_entry_index(const entry_list* el,enum match_type,index* ix){
-
+enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix){
+	int val=0;
+	if(type==1)//MT_HAMMING_DIST 
+		val=1;
+	if(type==2)//MT_EDIT_DIST
+		val=2;
+	if(el==NULL)
+		return EC_FAIL;
+	if(*ix!=NULL)
+		return EC_FAIL;
+	*ix=malloc(sizeof(Index));
+	(*ix)->Nodeptr=NULL;
+	for(struct entry* node=el->first_node;node!=NULL;node=node->next){
+		word* w=node->my_word;
+		if((*ix)->Nodeptr==NULL){
+			struct Node_Index* riza=malloc(sizeof(struct Node_Index));
+			riza->child_counter=0;
+			riza->Root_Node=NULL;
+			riza->the_word=malloc((strlen(w)+1)*sizeof(char));
+			strcpy(riza->the_word,w);
+			(*ix)->Nodeptr=riza;
+		}
+		else{
+			struct Node_Index* start=(*ix)->Nodeptr;
+			while(1){
+				int distance=0;
+				if(val==1){
+					distance=hamming_distance(start->the_word,w);
+				}
+				if(val==2){
+					//distance=edit_distance(start->the_word,w);
+				}
+				if(start->child_counter==0){
+					struct Node_Index* new_node=malloc(sizeof(struct Node_Index));
+					new_node->child_counter=0;
+					new_node->Root_Node=NULL;
+					new_node->the_word=malloc((strlen(w)+1)*sizeof(char));
+					strcpy(new_node->the_word,w);
+					start->Root_Node=realloc(start->Root_Node,(start->child_counter+1)*sizeof(struct root));
+					start->Root_Node[start->child_counter].Id_root=distance;
+					start->Root_Node[start->child_counter].childptr=new_node;
+					start->child_counter+=1;
+				}
+				else{
+					int found=0;
+					struct Node_Index* if_exists=NULL;
+					for(int i=0;i<start->child_counter;i++){
+						if(distance==start->Root_Node[i].Id_root){
+							found=1;
+							if_exists=start->Root_Node[i].childptr;
+							break;
+						}
+					}
+					if(found==1){
+						start=if_exists;
+						continue;
+					}
+					else{
+						struct Node_Index* new_node=malloc(sizeof(struct Node_Index));
+						new_node->child_counter=0;
+						new_node->Root_Node=NULL;
+						new_node->the_word=malloc((strlen(w)+1)*sizeof(char));
+						strcpy(new_node->the_word,w);
+						start->Root_Node=realloc(start->Root_Node,(start->child_counter+1)*sizeof(struct root));
+						start->Root_Node[start->child_counter].Id_root=distance;
+						start->Root_Node[start->child_counter].childptr=new_node;
+						start->child_counter+=1;
+					}
+				}
+			}
+		}
+	}
+	return EC_SUCCESS;
 }
-enum error_Code lookup_entry_index(const word* w,index* ix,int threshold,entry_list* result){
-
+enum error_code lookup_entry_index(const word* w,Index* ix,int threshold,entry_list** result){
+	return EC_SUCCESS;
 }
-enum error_code destroy_entry_index(index* ix){
-
-}*/
+enum error_code destroy_entry_index(Index* ix){
+	if(ix==NULL)
+		return EC_FAIL;
+	struct Node_Index* riza_node=(*ix).Nodeptr;
+	Destroy_Index_Node(riza_node);
+	return EC_SUCCESS;
+}
 
 int edit_distance(char* word1, char* word2, int sp){ //sp is the starting position of the longest word
     int distance = 0;
@@ -222,5 +297,13 @@ void delete_name_info(struct Info_Table* node){
 		free(node->nodes[j].names);
 	}
 	free(node->nodes);
+	free(node);
+}
+void Destroy_Index_Node(struct Node_Index* node){
+	for(int i=0;i<node->child_counter;i++){
+		struct Node_Index* komvos=node->Root_Node[i].childptr;
+		Destroy_Index_Node(komvos);
+	}
+	free(node->the_word);
 	free(node);
 }
