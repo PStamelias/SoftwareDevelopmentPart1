@@ -25,6 +25,14 @@ typedef struct entry_list{
   entry* current_node;
   unsigned int counter;
 }entry_list;
+struct Info_Table{
+  struct Name_info* nodes;
+  int counter;
+};
+struct Name_info{
+  char** names;
+  int counter;
+};
 enum error_code create_entry();
 enum error_code destroy_entry(entry* e);
 enum error_code create_entry_list(entry_list** el);
@@ -38,3 +46,5 @@ enum error_Code lookup_entry_index(const word* w,index* ix,int threshold,entry_l
 enum error_code destroy_entry_index(index* ix);*/
 int edit_distance(char*, char*, int);    //complexity: O(n(m-n)), m is the length of the largest word, n is the length of the shortest word
 int hamming_distance(char*, char*); //complexity: O(n), n is the length of the shortest word
+void delete_name_info(struct Info_Table* node);
+struct Info_Table* deduplication_method(char* filename);

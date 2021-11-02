@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "fun.h"
+#define MAX_LENGTH_WORD 31
 enum error_code create_entry(const word* w,entry** e){
 	if(*e!=NULL)
 		return EC_FAIL;
@@ -164,4 +165,62 @@ int hamming_distance(char* word1, char* word2){
     }
     distance = distance + (maxlen - i);     //add the remaining length to the distance
     return distance;
+}
+struct Info_Table* deduplication_method(char* filename){
+	FILE* f=fopen(filename,"r");
+	if(f==NULL)
+		return NULL;
+	char word[MAX_LENGTH_WORD];
+	struct Info_Table* the_node=malloc(sizeof(struct Info_Table));
+	the_node->counter=0;
+	the_node->nodes=NULL;
+	the_node->nodes=realloc(the_node->nodes,(the_node->counter+1)*sizeof(struct Name_info));
+	the_node->nodes[the_node->counter].counter=0;
+	the_node->nodes[the_node->counter].names=NULL;
+	the_node->nodes[the_node->counter].names=realloc(the_node->nodes[the_node->counter].names,(the_node->nodes[the_node->counter].counter+1)*sizeof(char* ));
+	the_node->counter+=1;
+	char c;
+	int k=0;
+	int found=0;
+	while ((c = fgetc(f)) != EOF){
+		if(c=='&'){
+			the_node->nodes=realloc(the_node->nodes,(the_node->counter+1)*sizeof(struct Name_info));
+			the_node->nodes[the_node->counter].counter=0;
+			the_node->nodes[the_node->counter].names=NULL;
+			the_node->nodes[the_node->counter].names=realloc(the_node->nodes[the_node->counter].names,(the_node->nodes[the_node->counter].counter+1)*sizeof(char* ));
+			the_node->counter+=1;
+			memset(word,0,MAX_LENGTH_WORD);
+        	k=0;
+			continue;
+        }
+        if(c==' '||c=='\n'){
+        	found=0;
+        	word[k]='\0';
+        	for(int i=0;i<the_node->nodes[the_node->counter-1].counter;i++){
+        		if(!strcmp(word,the_node->nodes[the_node->counter-1].names[i]))
+        			found=1;
+        	}
+        	if(found==0){
+        		the_node->nodes[the_node->counter-1].names=realloc(the_node->nodes[the_node->counter-1].names,(the_node->nodes->counter+1)*sizeof(char* ));
+        		the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter]=NULL;
+        		the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter]=(char* )malloc((k+1)*sizeof(char));
+        		strcpy(the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter++],word);
+        	}
+        	memset(word,0,MAX_LENGTH_WORD);
+        	k=0;
+        	continue;
+        }
+        word[k++]=c;
+	}
+	fclose(f);
+	return the_node;
+}
+void delete_name_info(struct Info_Table* node){
+	for(int j=0;j<node->counter;j++){
+		for(int k=0;k<node->nodes[j].counter;k++)
+			free(node->nodes[j].names[k]);
+		free(node->nodes[j].names);
+	}
+	free(node->nodes);
+	free(node);
 }
