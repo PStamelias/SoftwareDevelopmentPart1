@@ -43,7 +43,7 @@ struct Node_Index{
 typedef struct Index{
   struct Node_Index* Nodeptr;
 }Index;
-enum error_code create_entry();
+enum error_code create_entry(const word* w,entry** e);
 enum error_code destroy_entry(entry* e);
 enum error_code create_entry_list(entry_list** el);
 unsigned int get_number_entries(const entry_list* el);

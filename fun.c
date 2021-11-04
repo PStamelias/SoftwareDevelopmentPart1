@@ -25,8 +25,6 @@ enum error_code destroy_entry(entry* e){
 enum error_code create_entry_list(entry_list** el){
 	if(*el!=NULL)
 		return EC_FAIL;
-	if((*el)->first_node!=NULL||(*el)->current_node!=NULL||(*el)->counter!=0)
-		return EC_FAIL;
 	entry_list* node=malloc(sizeof(entry_list));
 	node->first_node=NULL;
 	node->current_node=NULL;
@@ -50,6 +48,7 @@ enum error_code add_entry(entry_list* el,const entry* e){
 		return EC_FAIL;
 	if(el->first_node==NULL){
 		el->first_node=node;
+		el->counter=1;
 		el->current_node=node;
 		return EC_SUCCESS;
 	}
@@ -62,6 +61,7 @@ enum error_code add_entry(entry_list* el,const entry* e){
 		}
 		start=start->next;
 	}
+	el->counter++;
 	return EC_SUCCESS;
 }
 entry* get_first(const entry_list* el){
@@ -130,7 +130,7 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 					distance=hamming_distance(start->the_word,w);
 				}
 				if(val==2){
-					//distance=edit_distance(start->the_word,w);
+					distance=edit_distance(start->the_word,w,0);
 				}
 				if(start->child_counter==0){
 					struct Node_Index* new_node=malloc(sizeof(struct Node_Index));
@@ -142,6 +142,7 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 					start->Root_Node[start->child_counter].Id_root=distance;
 					start->Root_Node[start->child_counter].childptr=new_node;
 					start->child_counter+=1;
+					break;
 				}
 				else{
 					int found=0;
@@ -167,6 +168,7 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 						start->Root_Node[start->child_counter].Id_root=distance;
 						start->Root_Node[start->child_counter].childptr=new_node;
 						start->child_counter+=1;
+						break;
 					}
 				}
 			}
@@ -182,6 +184,7 @@ enum error_code destroy_entry_index(Index* ix){
 		return EC_FAIL;
 	struct Node_Index* riza_node=(*ix).Nodeptr;
 	Destroy_Index_Node(riza_node);
+	free(ix);
 	return EC_SUCCESS;
 }
 
@@ -304,6 +307,7 @@ void Destroy_Index_Node(struct Node_Index* node){
 		struct Node_Index* komvos=node->Root_Node[i].childptr;
 		Destroy_Index_Node(komvos);
 	}
+	free(node->Root_Node);
 	free(node->the_word);
 	free(node);
 }
