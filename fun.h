@@ -1,3 +1,4 @@
+#include <stdbool.h>
 typedef enum MatchType{
   MT_EXACT_MATCH,
   MT_HAMMING_DIST,
@@ -23,26 +24,24 @@ typedef struct entry_list{
   entry* current_node;
   unsigned int counter;
 }entry_list;
-struct Info_Table{
-  struct Name_info* nodes;
-  int counter;
-};
-struct Name_info{
-  char** names;
-  int counter;
-};
-struct root{
-  int Id_root;
-  struct Node_Index* childptr;
-};
-struct Node_Index{
-  word* the_word;
-  int child_counter;
-  struct root* Root_Node;
+struct NodeIndex{
+  word* wd;
+  int distance;
+  struct NodeIndex* next;
+  struct NodeIndex* firstChild;
 };
 typedef struct Index{
-  struct Node_Index* Nodeptr;
+  struct NodeIndex* root;
+  bool type;
 }Index;
+struct Name_Info{
+  int counter;
+  struct Name** ptr;
+};
+struct Name{
+  char* the_name;
+  struct Name* next;
+};
 enum error_code create_entry(const word* w,entry** e);
 enum error_code destroy_entry(entry* e);
 enum error_code create_entry_list(entry_list** el);
@@ -56,6 +55,6 @@ enum error_code lookup_entry_index(const word* w,Index* ix,int threshold,entry_l
 enum error_code destroy_entry_index(Index* ix);
 int edit_distance(char*, char*, int);    //complexity: O(n(m-n)), m is the length of the largest word, n is the length of the shortest word
 int hamming_distance(char*, char*); //complexity: O(n), n is the length of the shortest word
-void delete_name_info(struct Info_Table* node);
-struct Info_Table* deduplication_method(char* filename);
-void Destroy_Index_Node(struct Node_Index* node);
+void delete_name_info(struct Name_Info* node);
+struct Name_Info* deduplication_method(char* filename);
+void destroy_index_nodes(struct NodeIndex* node);

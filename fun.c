@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #define MAX_LENGTH_WORD 31
 #include "fun.h"
 enum error_code create_entry(const word* w,entry** e){
@@ -15,11 +16,16 @@ enum error_code create_entry(const word* w,entry** e){
 	strcpy((*e)->my_word,w);
 	return EC_SUCCESS;
 }
+
 enum error_code destroy_entry(entry* e){
 	if(e==NULL)
 		return EC_FAIL;
 	free(e->my_word);
+	e->my_word=NULL;
 	free(e);
+	e=NULL;
+	if(e!=NULL)
+		return EC_FAIL;
 	return EC_SUCCESS;
 }
 enum error_code create_entry_list(entry_list** el){
@@ -98,6 +104,9 @@ enum error_code destroy_entry_list(entry_list* el){
 		next_node=next_node->next;
 	}
 	free(el);
+	el=NULL;
+	if(el!=NULL)
+		return EC_FAIL;
 	return EC_SUCCESS;
 }
 enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix){
@@ -111,66 +120,67 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 	if(*ix!=NULL)
 		return EC_FAIL;
 	*ix=malloc(sizeof(Index));
-	(*ix)->Nodeptr=NULL;
+	(*ix)->root=NULL;
+	if(val==1)
+		(*ix)->type=0;
+	if(val==2)
+		(*ix)->type=1;
 	for(struct entry* node=el->first_node;node!=NULL;node=node->next){
-		word* w=node->my_word;
-		if((*ix)->Nodeptr==NULL){
-			struct Node_Index* riza=malloc(sizeof(struct Node_Index));
-			riza->child_counter=0;
-			riza->Root_Node=NULL;
-			riza->the_word=malloc((strlen(w)+1)*sizeof(char));
-			strcpy(riza->the_word,w);
-			(*ix)->Nodeptr=riza;
+		word* curr_word=node->my_word;
+		if((*ix)->root==NULL){
+			struct NodeIndex* e=malloc(sizeof(struct NodeIndex));
+			e->next=NULL;
+			e->firstChild=NULL;
+			e->distance=0;
+			e->wd=NULL;
+			e->wd=malloc((strlen(curr_word)+1)*sizeof(char));
+			strcpy(e->wd,curr_word);
+			(*ix)->root=e;
 		}
 		else{
-			struct Node_Index* start=(*ix)->Nodeptr;
+			struct NodeIndex* start=(*ix)->root;
 			while(1){
 				int distance=0;
 				if(val==1){
-					distance=hamming_distance(start->the_word,w);
+					distance=hamming_distance(start->wd,curr_word);
 				}
 				if(val==2){
-					distance=edit_distance(start->the_word,w,0);
+					distance=edit_distance(start->wd,curr_word,0);
 				}
-				if(start->child_counter==0){
-					struct Node_Index* new_node=malloc(sizeof(struct Node_Index));
-					new_node->child_counter=0;
-					new_node->Root_Node=NULL;
-					new_node->the_word=malloc((strlen(w)+1)*sizeof(char));
-					strcpy(new_node->the_word,w);
-					start->Root_Node=realloc(start->Root_Node,(start->child_counter+1)*sizeof(struct root));
-					start->Root_Node[start->child_counter].Id_root=distance;
-					start->Root_Node[start->child_counter].childptr=new_node;
-					start->child_counter+=1;
-					break;
-				}
-				else{
-					int found=0;
-					struct Node_Index* if_exists=NULL;
-					for(int i=0;i<start->child_counter;i++){
-						if(distance==start->Root_Node[i].Id_root){
-							found=1;
-							if_exists=start->Root_Node[i].childptr;
-							break;
-						}
-					}
-					if(found==1){
-						start=if_exists;
-						continue;
-					}
-					else{
-						struct Node_Index* new_node=malloc(sizeof(struct Node_Index));
-						new_node->child_counter=0;
-						new_node->Root_Node=NULL;
-						new_node->the_word=malloc((strlen(w)+1)*sizeof(char));
-						strcpy(new_node->the_word,w);
-						start->Root_Node=realloc(start->Root_Node,(start->child_counter+1)*sizeof(struct root));
-						start->Root_Node[start->child_counter].Id_root=distance;
-						start->Root_Node[start->child_counter].childptr=new_node;
-						start->child_counter+=1;
+				int found=0;
+				struct NodeIndex* target=NULL;
+				for(struct NodeIndex* c=start->firstChild;c!=NULL;c=c->next){
+					if(distance==c->distance){
+						found=1;
+						target=c;
 						break;
 					}
 				}
+				if(found==1){
+					start=target;
+					continue;
+				}
+				struct NodeIndex* new_some=malloc(sizeof(struct NodeIndex));
+				new_some->next=NULL;
+				new_some->firstChild=NULL;
+				new_some->distance=distance;
+				new_some->wd=NULL;
+				new_some->wd=malloc((strlen(curr_word)+1)*sizeof(char));
+				strcpy(new_some->wd,curr_word);
+				struct NodeIndex* c=start->firstChild;
+				if(c==NULL){
+					start->firstChild=new_some;
+				}
+				else{
+					while(1){
+						if(c->next==NULL){
+							c->next=new_some;
+							break;
+						}
+						c=c->next;
+					}	
+				}
+				break;
 			}
 		}
 	}
@@ -186,9 +196,11 @@ enum error_code lookup_entry_index(const word* w,Index* ix,int threshold,entry_l
 enum error_code destroy_entry_index(Index* ix){
 	if(ix==NULL)
 		return EC_FAIL;
-	struct Node_Index* riza_node=(*ix).Nodeptr;
-	Destroy_Index_Node(riza_node);
+	destroy_index_nodes(ix->root);
 	free(ix);
+	ix=NULL;
+	if(ix!=NULL)
+		return EC_FAIL;	
 	return EC_SUCCESS;
 }
 
@@ -248,70 +260,96 @@ int hamming_distance(char* word1, char* word2){
     distance = distance + (maxlen - i);     //add the remaining length to the distance
     return distance;
 }
-struct Info_Table* deduplication_method(char* filename){
+
+
+
+void destroy_index_nodes(struct NodeIndex* node){
+	for(struct NodeIndex* s=node->firstChild;s!=NULL;s=s->next){
+		destroy_index_nodes(s);
+	}
+	free(node->wd);
+	free(node);
+}
+struct Name_Info* deduplication_method(char* filename){
 	FILE* f=fopen(filename,"r");
 	if(f==NULL)
 		return NULL;
-	char word[MAX_LENGTH_WORD];
-	struct Info_Table* the_node=malloc(sizeof(struct Info_Table));
-	the_node->counter=0;
-	the_node->nodes=NULL;
-	the_node->nodes=realloc(the_node->nodes,(the_node->counter+1)*sizeof(struct Name_info));
-	the_node->nodes[the_node->counter].counter=0;
-	the_node->nodes[the_node->counter].names=NULL;
-	the_node->nodes[the_node->counter].names=realloc(the_node->nodes[the_node->counter].names,(the_node->nodes[the_node->counter].counter+1)*sizeof(char* ));
-	the_node->counter+=1;
 	char c;
-	int k=0;
-	int found=0;
+	int coun=0;
 	while ((c = fgetc(f)) != EOF){
-		if(c=='&'){
-			the_node->nodes=realloc(the_node->nodes,(the_node->counter+1)*sizeof(struct Name_info));
-			the_node->nodes[the_node->counter].counter=0;
-			the_node->nodes[the_node->counter].names=NULL;
-			the_node->nodes[the_node->counter].names=realloc(the_node->nodes[the_node->counter].names,(the_node->nodes[the_node->counter].counter+1)*sizeof(char* ));
-			the_node->counter+=1;
-			memset(word,0,MAX_LENGTH_WORD);
-        	k=0;
-			continue;
-        }
-        if(c==' '||c=='\n'){
-        	found=0;
-        	word[k]='\0';
-        	for(int i=0;i<the_node->nodes[the_node->counter-1].counter;i++){
-        		if(!strcmp(word,the_node->nodes[the_node->counter-1].names[i]))
-        			found=1;
-        	}
-        	if(found==0){
-        		the_node->nodes[the_node->counter-1].names=realloc(the_node->nodes[the_node->counter-1].names,(the_node->nodes->counter+1)*sizeof(char* ));
-        		the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter]=NULL;
-        		the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter]=(char* )malloc((k+1)*sizeof(char));
-        		strcpy(the_node->nodes[the_node->counter-1].names[the_node->nodes[the_node->counter-1].counter++],word);
-        	}
-        	memset(word,0,MAX_LENGTH_WORD);
-        	k=0;
-        	continue;
-        }
-        word[k++]=c;
-	}
+        if(c=='&')
+        	coun+=1;
+    }
+    struct Name_Info* the_node=malloc(sizeof(struct Name_Info));
+    rewind(f);
+    the_node->counter=coun+1;
+    the_node->ptr=malloc(the_node->counter*sizeof(struct Name*));
+    for(int i=0;i<the_node->counter;i++)
+    	the_node->ptr[i]=NULL;
+    int pos=0;
+    char word[MAX_LENGTH_WORD];
+    int k=0;
+    while ((c = fgetc(f)) != EOF){
+    	if(c==' '||c=='\n'){
+    		word[k]='\0';
+    		if(!strcmp(word,"\0"))
+    			continue;
+    		if(the_node->ptr[pos]==NULL){
+    			struct Name* node=malloc(sizeof(struct Name));
+    			node->next=NULL;
+    			node->the_name=malloc((strlen(word)+1)*sizeof(char));
+    			strcpy(node->the_name,word);
+    			the_node->ptr[pos]=node;
+    		}
+    		else{
+    			int found=0;
+    			for(struct Name* start=the_node->ptr[pos];start!=NULL;start=start->next){
+    				if(!strcmp(start->the_name,word)){
+    					found=1;
+    					break;
+    				}
+    			}
+    			if(found==0){
+    				struct Name* node=malloc(sizeof(struct Name));
+	    			node->next=NULL;
+	    			node->the_name=malloc((strlen(word)+1)*sizeof(char));
+	    			strcpy(node->the_name,word);
+	    			struct Name* s=the_node->ptr[pos];
+	    			while(1){
+	    				if(s->next==NULL){
+	    					s->next=node;
+	    					break;
+	    				}
+	    				s=s->next;
+	    			}
+    			}
+    		}
+    		memset(word,0,MAX_LENGTH_WORD);
+    		k=0;
+    		continue;
+    	}
+    	if(c=='&'){
+    		pos++;
+    		continue;
+    	}
+    	word[k++]=c;
+    }
 	fclose(f);
 	return the_node;
 }
-void delete_name_info(struct Info_Table* node){
-	for(int j=0;j<node->counter;j++){
-		for(int k=0;k<node->nodes[j].counter;k++)
-			free(node->nodes[j].names[k]);
-		free(node->nodes[j].names);
+void delete_name_info(struct Name_Info* node){
+	for(int i=0;i<node->counter;i++){
+		struct Name* e=node->ptr[i];
+		struct Name* NexName=e->next;
+		while(1){
+			free(e->the_name);
+			free(e);
+			if(NexName==NULL)
+				break;
+			e=NexName;
+			NexName=NexName->next;
+		}
 	}
-	free(node->nodes);
-	free(node);
-}
-void Destroy_Index_Node(struct Node_Index* node){
-	for(int i=0;i<node->child_counter;i++){
-		struct Node_Index* komvos=node->Root_Node[i].childptr;
-		Destroy_Index_Node(komvos);
-	}
-	free(node->Root_Node);
-	free(node->the_word);
+	free(node->ptr);
 	free(node);
 }
