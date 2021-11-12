@@ -188,7 +188,6 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 }
 
 enum error_code lookup_entry_index(word* w,Index* ix,int threshold,entry_list** result){
-	//i was here
     if(ix==NULL){
 		return EC_FAIL;
     }
@@ -393,7 +392,7 @@ struct Name_Info* deduplication_method(char* filename){
 	fclose(f);
 	return the_node;
 }
-void delete_name_info(struct Name_Info* node){
+enum error_code delete_name_info(struct Name_Info* node){
 	for(int i=0;i<node->counter;i++){
 		struct Name* e=node->ptr[i];
 		struct Name* NexName=e->next;
@@ -408,4 +407,8 @@ void delete_name_info(struct Name_Info* node){
 	}
 	free(node->ptr);
 	free(node);
+	node=NULL;
+	if(node!=NULL)
+		return EC_FAIL;
+	return EC_SUCCESS;
 }

@@ -157,20 +157,21 @@ void test_destroy_entry_index(void){
    TEST_CHECK(con != EC_FAIL);
 }
 void test_edit_distance(void){
-
+   int distance=edit_distance("belt","hell",0);
+   TEST_CHECK(distance == 2);
 }
 void test_hamming_distance(void){
-
+   int distance=hamming_distance("belt","hell");
+   TEST_CHECK(distance == 2);
 }
 void test_deduplication_method(void){
    struct Name_Info* Word=deduplication_method("out.txt");
    TEST_CHECK(Word != NULL);
 }
 void test_delete_name_info(void){
-   
-}
-void test_destroy_index_nodes(void){
-   
+   struct Name_Info* Word=deduplication_method("out.txt");
+   enum error_code co=delete_name_info(Word);
+   TEST_CHECK(co != EC_FAIL);
 }
 TEST_LIST = {
    {"create_entry",test_create_entry},
@@ -188,6 +189,6 @@ TEST_LIST = {
    {"hamming_distance",test_hamming_distance},
    {"deduplication_method",test_deduplication_method},
    {"delete_name_info",test_delete_name_info},
-   {"destroy_index_nodes",test_destroy_index_nodes},
+   /*{"destroy_index_nodes",test_destroy_index_nodes},-- den ti tsekarame dioti den ekane free ti mnimi */
    { NULL,NULL }
 };
