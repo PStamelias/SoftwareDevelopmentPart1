@@ -188,6 +188,7 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 }
 
 enum error_code lookup_entry_index(word* w,Index* ix,int threshold,entry_list** result){
+	//i was here
     if(ix==NULL){
 		return EC_FAIL;
     }
