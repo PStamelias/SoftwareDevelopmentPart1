@@ -189,6 +189,6 @@ TEST_LIST = {
    {"hamming_distance",test_hamming_distance},
    {"deduplication_method",test_deduplication_method},
    {"delete_name_info",test_delete_name_info},
-   /*{"destroy_index_nodes",test_destroy_index_nodes},-- den ti tsekarame dioti den ekane free ti mnimi */
+   /*{"destroy_index_nodes",test_destroy_index_nodes},-- den ti tsekarame dioti kanei  free ti mnimi */
    { NULL,NULL }
 };
