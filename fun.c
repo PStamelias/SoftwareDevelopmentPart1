@@ -186,13 +186,74 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 	}
 	return EC_SUCCESS;
 }
-enum error_code lookup_entry_index(const word* w,Index* ix,int threshold,entry_list** result){
+/*enum error_code lookup_entry_index(const word* w,Index* ix,int threshold,entry_list** result){
 	if(ix==NULL)
 		return EC_FAIL;
 	if(*result!=NULL)
 		return EC_FAIL;
 	return EC_SUCCESS;
+}*/
+enum error_code lookup_entry_index(word* w,Index* ix,int threshold,entry_list** result){
+    if(ix==NULL){
+		return EC_FAIL;
+    }
+    if(ix->root==NULL){
+        return EC_FAIL;
+    }
+    int d, cd;
+    int bot, ceil;
+    struct NodeIndex* curr;
+    entry* e = NULL;
+    bool type = ix->type;//what method do we use for distance
+    struct StackNode* candidate_list = NULL;
+    push_stack(&candidate_list, &(ix->root));
+    struct NodeIndex* children = NULL;
+    while(candidate_list!=NULL){
+        curr = pop_stack(&candidate_list);
+        if(type){
+            d = edit_distance(curr->wd, w, 0);
+        }else{
+            d = hamming_distance(curr->wd, w);
+        }
+        if(d <= threshold){
+            bot = threshold - d;
+            ceil = threshold + d;
+            create_entry(curr->wd, &e);
+            add_entry(*result, e);
+            e = NULL;
+        }else{
+            bot = d - threshold;
+            ceil = threshold + d;
+        }
+        children = curr->firstChild;
+        while(children != NULL){
+            if(children->distance >= bot && children->distance <= ceil){
+                push_stack(&candidate_list, &children);
+            }
+            children = children->next;
+        }
+    }
+    
+	if(*result!=NULL){
+		return EC_FAIL;
+    }
+	return EC_SUCCESS;
 }
+
+void push_stack(struct StackNode** list, struct NodeIndex** n){
+    struct StackNode* temp = malloc(sizeof(struct StackNode));
+    temp->node = *n;
+    temp->next = *list;
+    *list = temp;
+}
+struct NodeIndex* pop_stack(struct StackNode** list){
+    struct StackNode* temp = *list;
+    struct NodeIndex* ret = (*list)->node;
+    *list = (*list)->next;
+    free(temp);
+    return ret;
+}
+
 enum error_code destroy_entry_index(Index* ix){
 	if(ix==NULL)
 		return EC_FAIL;
