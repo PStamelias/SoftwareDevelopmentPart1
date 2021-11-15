@@ -330,37 +330,38 @@ struct Name_Info* deduplication_method(char* filename){
 	FILE* f=fopen(filename,"r");
 	if(f==NULL)
 		return NULL;
+	struct Name_Info* startnode=NULL;
+	struct Name_Info* the_node=malloc(sizeof(struct Name_Info));
+	the_node->next=NULL;
+	the_node->ptr=NULL;
+	startnode=the_node;
+	char word[MAX_LENGTH_WORD];
 	char c;
-	int coun=0;
+	int pos_word=0;
 	while ((c = fgetc(f)) != EOF){
-        if(c=='&')
-        	coun+=1;
-    }
-    struct Name_Info* the_node=malloc(sizeof(struct Name_Info));
-    rewind(f);
-    the_node->counter=coun+1;
-    the_node->ptr=malloc(the_node->counter*sizeof(struct Name*));
-    for(int i=0;i<the_node->counter;i++)
-    	the_node->ptr[i]=NULL;
-    int pos=0;
-    char word[MAX_LENGTH_WORD];
-    int k=0;
-    while ((c = fgetc(f)) != EOF){
-    	if(c==' '||c=='\n'){
-    		word[k]='\0';
+		if(c=='&'){
+			struct Name_Info* the_node=malloc(sizeof(struct Name_Info));
+			the_node->next=NULL;
+			the_node->ptr=NULL;
+			startnode->next=the_node;
+			startnode=the_node;
+			continue;
+		}
+		if(c==' '||c=='\n'){
+    		word[pos_word]='\0';
     		if(!strcmp(word,"\0"))
     			continue;
-    		if(the_node->ptr[pos]==NULL){
+    		if(startnode->ptr==NULL){
     			struct Name* node=malloc(sizeof(struct Name));
     			node->next=NULL;
     			node->the_name=malloc((strlen(word)+1)*sizeof(char));
     			strcpy(node->the_name,word);
-    			the_node->ptr[pos]=node;
+    			startnode->ptr=node;
     		}
     		else{
     			int found=0;
-    			for(struct Name* start=the_node->ptr[pos];start!=NULL;start=start->next){
-    				if(!strcmp(start->the_name,word)){
+    			for(struct Name* e=startnode->ptr;e!=NULL;e=e->next){
+    				if(!strcmp(e->the_name,word)){
     					found=1;
     					break;
     				}
@@ -370,7 +371,7 @@ struct Name_Info* deduplication_method(char* filename){
 	    			node->next=NULL;
 	    			node->the_name=malloc((strlen(word)+1)*sizeof(char));
 	    			strcpy(node->the_name,word);
-	    			struct Name* s=the_node->ptr[pos];
+	    			struct Name* s=startnode->ptr;
 	    			while(1){
 	    				if(s->next==NULL){
 	    					s->next=node;
@@ -381,35 +382,33 @@ struct Name_Info* deduplication_method(char* filename){
     			}
     		}
     		memset(word,0,MAX_LENGTH_WORD);
-    		k=0;
+    		pos_word=0;
     		continue;
     	}
-    	if(c=='&'){
-    		pos++;
-    		continue;
-    	}
-    	word[k++]=c;
-    }
+		word[pos_word++]=c;
+	}
 	fclose(f);
 	return the_node;
 }
 enum error_code delete_name_info(struct Name_Info* node){
-	for(int i=0;i<node->counter;i++){
-		struct Name* e=node->ptr[i];
-		struct Name* NexName=e->next;
+	struct Name_Info* start=node;
+	struct Name_Info* start_next=start->next;
+	while(1){
+		struct Name* other_node=start->ptr;
+		struct Name* e_other=other_node->next;
 		while(1){
-			free(e->the_name);
-			free(e);
-			if(NexName==NULL)
+			free(other_node->the_name);
+			free(other_node);
+			other_node=e_other;
+			if(other_node==NULL)
 				break;
-			e=NexName;
-			NexName=NexName->next;
+			e_other=e_other->next;
 		}
+		free(start);
+		start=start_next;
+		if(start==NULL)
+			break;
+		start_next=start_next->next;
 	}
-	free(node->ptr);
-	free(node);
-	node=NULL;
-	if(node!=NULL)
-		return EC_FAIL;
 	return EC_SUCCESS;
 }

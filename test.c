@@ -85,22 +85,25 @@ void test_destroy_entry_list(void){
    TEST_CHECK(co != EC_FAIL);
 }
 void test_build_entry_index(void){
-   struct Name_Info* Word=deduplication_method("out.txt");
+   struct Name_Info* start_list1=deduplication_method("out.txt");
    entry_list* el=NULL;
    Index* ix=NULL;
    create_entry_list(&el);
-   for(int i=0;i<Word->counter;i++){
-      struct Name* d=Word->ptr[i];
+   while(1){
+      struct Name* e=start_list1->ptr;
       while(1){
-         const word* k=d->the_name;
+         const word* k=e->the_name;
          entry* en=NULL;
          create_entry(k,&en);
          const entry* w=en;
          add_entry(el,w);
-         d=d->next;
-         if(d==NULL)
+         e=e->next;
+         if(e==NULL)
             break;
       }
+      start_list1=start_list1->next;
+      if(start_list1==NULL)
+         break;
    }
    const entry_list* my=el;
    enum error_code a=build_entry_index(my,2,&ix);
@@ -108,22 +111,25 @@ void test_build_entry_index(void){
    TEST_CHECK(ix != NULL);
 }
 void test_lookup_entry_index(void){
-   struct Name_Info* Word=deduplication_method("out.txt");
+   struct Name_Info* start_list1=deduplication_method("out.txt");
    entry_list* el=NULL;
    Index* ix=NULL;
    create_entry_list(&el);
-   for(int i=0;i<Word->counter;i++){
-      struct Name* d=Word->ptr[i];
+   while(1){
+      struct Name* e=start_list1->ptr;
       while(1){
-         const word* k=d->the_name;
+         const word* k=e->the_name;
          entry* en=NULL;
          create_entry(k,&en);
          const entry* w=en;
          add_entry(el,w);
-         d=d->next;
-         if(d==NULL)
+         e=e->next;
+         if(e==NULL)
             break;
       }
+      start_list1=start_list1->next;
+      if(start_list1==NULL)
+         break;
    }
    const entry_list* my=el;
    build_entry_index(my,2,&ix);
@@ -135,22 +141,25 @@ void test_lookup_entry_index(void){
    TEST_CHECK(a != EC_FAIL);
 }
 void test_destroy_entry_index(void){
-   struct Name_Info* Word=deduplication_method("out.txt");
+   struct Name_Info* start_list1=deduplication_method("out.txt");
    entry_list* el=NULL;
    Index* ix=NULL;
    create_entry_list(&el);
-   for(int i=0;i<Word->counter;i++){
-      struct Name* d=Word->ptr[i];
+   while(1){
+      struct Name* e=start_list1->ptr;
       while(1){
-         const word* k=d->the_name;
+         const word* k=e->the_name;
          entry* en=NULL;
          create_entry(k,&en);
          const entry* w=en;
          add_entry(el,w);
-         d=d->next;
-         if(d==NULL)
+         e=e->next;
+         if(e==NULL)
             break;
       }
+      start_list1=start_list1->next;
+      if(start_list1==NULL)
+         break;
    }
    const entry_list* my=el;
    build_entry_index(my,2,&ix);

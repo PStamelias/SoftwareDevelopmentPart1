@@ -35,8 +35,8 @@ typedef struct Index{
   bool type;
 }Index;
 struct Name_Info{
-  int counter;
-  struct Name** ptr;
+  struct Name_Info* next;
+  struct Name* ptr;
 };
 struct Name{
   char* the_name;
