@@ -10,7 +10,6 @@ int main(int argc, char **argv){
 		struct Name* e=start_list1->ptr;
 		while(1){
 			const word* k=e->the_name;
-			printf("%s\n",k);
 			entry* en=NULL;
 			create_entry(k,&en);
         	const entry* w=en;
@@ -25,7 +24,6 @@ int main(int argc, char **argv){
 	}
 	const entry_list* my=el;
 	build_entry_index(my,2,&ix);
-	//printf("%s\n",ix->root->firstChild->next->firstChild->next->wd);
 	destroy_entry_index(ix);
 	destroy_entry_list(el);
 	delete_name_info(start_list2);
