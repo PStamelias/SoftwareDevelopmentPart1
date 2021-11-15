@@ -187,23 +187,24 @@ enum error_code build_entry_index(const entry_list* el,MatchType type,Index** ix
 	return EC_SUCCESS;
 }
 
-enum error_code lookup_entry_index(word* w,Index* ix,int threshold,entry_list** result){
-    if(ix==NULL){
+enum error_code lookup_entry_index(word* w,Index** ix, struct StackNode** candidate_list,int threshold,entry_list** result){
+	//i was here
+    if(*ix==NULL){
 		return EC_FAIL;
     }
-    if(ix->root==NULL){
+    if((*ix)->root==NULL){
         return EC_FAIL;
     }
     int d, cd;
     int bot, ceil;
     struct NodeIndex* curr;
     entry* e = NULL;
-    bool type = ix->type;//what method do we use for distance
-    struct StackNode* candidate_list = NULL;
-    push_stack(&candidate_list, &(ix->root));
+    bool type = (*ix)->type;//what method do we use for distance
+    //struct StackNode* candidate_list = NULL;
+    push_stack(candidate_list, &((*ix)->root));
     struct NodeIndex* children = NULL;
-    while(candidate_list!=NULL){
-        curr = pop_stack(&candidate_list);
+    while(*candidate_list!=NULL){
+        curr = pop_stack(candidate_list);
         if(type){
             d = edit_distance(curr->wd, w, 0);
         }else{
@@ -222,7 +223,7 @@ enum error_code lookup_entry_index(word* w,Index* ix,int threshold,entry_list** 
         children = curr->firstChild;
         while(children != NULL){
             if(children->distance >= bot && children->distance <= ceil){
-                push_stack(&candidate_list, &children);
+                push_stack(candidate_list, &children);
             }
             children = children->next;
         }

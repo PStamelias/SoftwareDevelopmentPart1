@@ -127,11 +127,13 @@ void test_lookup_entry_index(void){
    }
    const entry_list* my=el;
    build_entry_index(my,2,&ix);
-   entry_list* oth=NULL;
-   //enum error_code a=lookup_entry_index();
+   entry_list* result=NULL;
+   struct StackNode* candidate_list = NULL;
+   enum error_code a=lookup_entry_index("henn", &ix, &candidate_list, 2, &result);
    //tsekare an i lista entry_list einai diafori toy NULL
-   //TEST_CHECK(el != NULL);
-   //TEST_CHECK(a != EC_FAIL);
+   TEST_CHECK(el != NULL);
+   TEST_CHECK(candidate_list == NULL);
+   TEST_CHECK(a != EC_FAIL);
 }
 void test_destroy_entry_index(void){
    struct Name_Info* Word=deduplication_method("out.txt");
