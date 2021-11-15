@@ -130,7 +130,6 @@ void test_lookup_entry_index(void){
    entry_list* result=NULL;
    struct StackNode* candidate_list = NULL;
    enum error_code a=lookup_entry_index("henn", &ix, &candidate_list, 2, &result);
-   //tsekare an i lista entry_list einai diafori toy NULL
    TEST_CHECK(el != NULL);
    TEST_CHECK(candidate_list == NULL);
    TEST_CHECK(a != EC_FAIL);
